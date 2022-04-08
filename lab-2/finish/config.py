@@ -1,0 +1,5 @@
+# KEY = "PASTE_YOUR_FACE_SUBSCRIPTION_KEY_HERE"
+#ENDPOINT = "PASTE_YOUR_FACE_ENDPOINT_HERE"
+
+KEY = "4945809300b04208a05e867b500b6b74"
+ENDPOINT = "https://ndc-porto-face.cognitiveservices.azure.com/"
