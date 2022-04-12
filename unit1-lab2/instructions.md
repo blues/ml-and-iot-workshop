@@ -262,3 +262,11 @@ draw.text(getCoordsForText(face), str(getMainEmotion(face)), fill=(255, 255, 255
 7. Run `python cloud-face.py` and you should see text on the image with the emotion prediction.
 
 ![Face with emotion prediction](images/cs-code-2.png)
+
+## Next Steps
+
+If you want to keep playing with this example, why not try:
+
+- Using `detect_with_stream` instead of `detect_with_url` to load a file with multiple faces (like [this one](assets/Dagestani_man_and_woman.jpg)) and create multiple bounding boxes.
+- Capture an image from your phone or webcam and run it though the service.
+- Try other example from the [Service Quickstart](https://docs.microsoft.com/en-us/azure/cognitive-services/Face/Quickstarts/client-libraries?pivots=programming-language-python&tabs=visual-studio)
