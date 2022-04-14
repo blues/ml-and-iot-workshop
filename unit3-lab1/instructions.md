@@ -17,6 +17,8 @@ If you're planning to run the model training process locally, you'll need to ins
 - [Numpy](https://numpy.org/install/)
 - [Matplotlib](https://matplotlib.org/stable/users/installing/index.html)
 
+For building the project for Swan, you'll need to install the ZephyrRTOS project using the [instructions here](https://docs.zephyrproject.org/latest/develop/getting_started/index.html)
+
 ## Training the model
 
 For this example, we'll create a model that helps our machine learn the equation `y = mx + c`. This is, of course, a contrived example, but we've chosen something simple to keep the focus on the process of going from model to MCU, not on the model training process itself.
@@ -66,7 +68,7 @@ Many MCU's (including the Blues Swan) do not have native filesystem support, whi
 On Linux or macOS, you can do this with the `xxd` command.
 
 ```bash
-xxd -i linear_regression_model.tflite > linear_regression_model_data.cpp
+xxd -i model.tflite > model.cc
 ```
 
 ## Performing inference on The Swan
@@ -90,7 +92,7 @@ Once you have a MCU-friendly model in hand, you're ready to use it. You first wa
 3. Next, include the C array version of your model you created previously
 
 ```cpp
-#include "linear_regression_model_data.h"
+#include "model.h"
 ```
 
 4. Then, you'll want to set-up a few objects to handling logging for us.
