@@ -68,25 +68,25 @@ Many MCU's (including the Blues Swan) do not have native filesystem support, whi
 On Linux or macOS, you can do this with the `xxd` command.
 
 ```bash
-xxd -i model.tflite > model.cc
+xxd -i model.tflite > model.h
 ```
 
 ## Performing inference on The Swan
 
-Once you have a MCU-friendly model in hand, you're ready to use it. You first want to install and configure TFLite for your project.
+Once you have a MCU-friendly model in hand, you're ready to use it. You'll create a new PlatformIO project for this section, so make sure you've installed the PlatformIO VSCode Extension.
 
 ### Configuring TFLite for inference
 
-1. To use TFLite for Swan, you'll need the `TensorFlowLite` library, which you can learn more about [here](https://www.tensorflow.org/lite/microcontrollers/get_started_low_level).
+1. Create a new PlatformIO Project targeting the Swan.
 
-2. Once you have installed the library, you'll want to include the following header files at the top of your project source.
+1. Once PlatformIO creates your project, move the `model.h` file into the `src` directory.
+
+1. To use TFLite for Swan, you'll need the `EloquentTinML` library, which you can search for and install under the Platform IO Libraries UI.
+
+1. Once you have installed the library, you'll want to include the following header file at the top of your project source.
 
 ```cpp
-#include "tensorflow/lite/experimental/micro/kernels/all_ops_resolver.h"
-#include "tensorflow/lite/experimental/micro/micro_error_reporter.h"
-#include "tensorflow/lite/experimental/micro/micro_interpreter.h"
-#include "tensorflow/lite/schema/schema_generated.h"
-#include "tensorflow/lite/version.h"
+#include <EloquentTinyML.h>
 ```
 
 3. Next, include the C array version of your model you created previously
@@ -95,63 +95,30 @@ Once you have a MCU-friendly model in hand, you're ready to use it. You first wa
 #include "model.h"
 ```
 
-4. Then, you'll want to set-up a few objects to handling logging for us.
+1. Then, specify a few defines and initialize the library.
 
 ```cpp
-tflite::MicroErrorReporter micro_error_reporter;
-tflite::ErrorReporter* error_reporter = &micro_error_reporter;
+#define NUMBER_OF_INPUTS 1
+#define NUMBER_OF_OUTPUTS 1
+#define TENSOR_ARENA_SIZE 2*1024
+
+Eloquent::TinyML::TfLite<NUMBER_OF_INPUTS, NUMBER_OF_OUTPUTS, TENSOR_ARENA_SIZE> ml;
 ```
 
-5. Now, we'll load the model into memory, and make sure the schema versions match.
+5. In the `setup` function, initialize the serial monitor and give yourself a delay to open the monitor. Then call the library `begin` method with the name of your model array variable .
 
 ```cpp
-const tflite::Model *model = tflite::GetModel(g_linear_regresion_model_data);
-if (model->version() != TFLITE_SCHEMA_VERSION)
-{
-  error_reporter->Report(
-    "Model provided is schema version %d not equal "
-    "to supported version %d.",
-    model->version(), TFLITE_SCHEMA_VERSION);
-  return;
+void setup() {
+    Serial.begin(115200);
+    delay(5000);
+
+    ml.begin(g_model);
 }
-```
-
-6. Once we've loaded a model, the next step is to instantiate an operations (or ops) resolver, which loads the operations a model will need for inferencing. In this case, we're using the `AllOpsResolver`, which is not recommended for production use, but it fine for our simple example.
-
-```cpp
-static tflite::ops::micro::AllOpsResolver resolver;
-```
-
-7. Next, we'll need to preallocate some memory for input, outputs and inferencing. For non-trivial models, you'll need to experiment with this value to make sure its large enough for runtime inferencing.
-
-```cpp
-constexpr int kTensorArenaSize = 2 * 1024;
-uint8_t tensor_arena[kTensorArenaSize];
-```
-
-8. Now, we'll instantiate an interpreter to manage inferencing and allocate needed memory with the `AllocateTensors` method.
-
-```cpp
-tflite::MicroInterpreter interpreter(model, resolver, tensor_arena,
-                                     kTensorArenaSize, error_reporter);
-TfLiteStatus allocate_status = interpreter->AllocateTensors();
-```
-
-9. Finally, we'll grab pointers to our model's input and output tensors. Make sure to place these into global objects so you can access them at runtime.
-
-```cpp
-// Declare these outside of setup
-TfLiteTensor *input = nullptr;
-TfLiteTensor *output = nullptr;
-
-// Assigned in setup
-input = interpreter->input(0);
-output = interpreter->output(0);
 ```
 
 ### Performing inference
 
-Now for the fun-part, inference! In this example project, inference is triggered when a user button is pressed. Once triggered, the application performs inference 100 times, passing a random `x` value between 0 and 1 into the model each time, invoking the model and obtaining the `y` result. After each run, the input (`x`) and output (`y`) values are output to the serial console.
+Now for the fun-part, inference! In this example project, inference is triggered when a user button is pressed. Once triggered, the application performs inference every two seconds, passing a random `x` value between 0 and 1 into the model each time, invoking the model and obtaining the `y` result. After each run, the input (`x`) and output (`y`) values are output to the serial console.
 
 1. The first step is to provide TFLite with an input value. I created a `randFloat` function to give me a float value between 0 and 1, and then set the result on the input tensor of the model.
 
@@ -160,44 +127,40 @@ float randFloat(float min, float max)
 {
   return ((max - min) * ((float)rand() / RAND_MAX)) + min;
 }
-
-// In loop
-float x_val = randFloat(0, 1);
-input->data.f[0] = x_val;
 ```
-2. Next, we'll run our input through the model by calling the interpreter's `Invoke` command and checking the result.
+
+1. Next, we'll run our input through the model by assigning the `x` value to the input, and calling the interpreter's `predict` command.
 
 ```cpp
-TfLiteStatus invoke_status = interpreter->Invoke();
+float x = randFloat(0,1);
 
-if (invoke_status != kTfLiteOk)
-{
-  error_reporter->Report("Invoke failed on x_val: %f\n",
-                          static_cast<double>(x_val));
-  return;
-}
+float input[1] = { x };
+float predicted = ml.predict(input);
 ```
-3. If everything worked, we can grab the inferred `y` value from the output tensor.
+3. Finally, we'll output the X and Predicted Y to the serial console.
 
 ```cpp
-float y_val = output->data.f[0];
+Serial.print("X Value: ");
+Serial.println(x);
+Serial.print("Predicted Y: ");
+Serial.println(predicted);
+Serial.println();
+delay(2000);
 ```
 
-4. Finally, we can log the input and output values to the Serial console to see how things look.
+1. Upload the program and open the monitor to see the values on the screen.
 
 ```bash
-X Value: 0.14
-Y Value: -0.52
+X Value: 0.51
+Predicted Y: 0.12
 
-X Value: 0.85
-Y Value: 0.85
+X Value: 0.59
+Predicted Y: 0.29
 
-X Value: 0.71
-Y Value: 0.57
-
-X Value: 0.31
-Y Value: -0.18
-
-X Value: 0.96
-Y Value: 1.07
+X Value: 0.55
+Predicted Y: 0.22
 ```
+
+### Bonus: Displaying X and Y values on the connected display
+
+If you've reached this point and you have time, why not output the X and Y values to the Hammer screen? Try on your own, or use the compled project in the `linear_regression` folder for inspiration.
