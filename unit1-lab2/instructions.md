@@ -158,7 +158,7 @@ def drawFaceRectangles() :
         draw.rectangle(getRectangle(face), outline='red')
 
     img.show()
-    img.save(os.cwd() + "/test-images/" + single_image_name + "_modified.png", "PNG")
+    img.save(os.getcwd() + "/test-images/" + single_image_name + "_modified.png", "PNG")
 ```
 
 12. This function uses another function called `getRectangle` that we also need to add.
