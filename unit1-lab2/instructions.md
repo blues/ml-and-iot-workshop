@@ -1,6 +1,6 @@
 # Lab 2 - Using Cloud Services for ML
 
-In this lab, you'll learn how cloud service providers work blah blah.
+In this lab, you'll learn how cloud service providers work.
 
 ## Prerequisites
 
