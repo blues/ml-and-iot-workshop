@@ -119,7 +119,15 @@ assert face_api_url
 
 ```
 
-8. Create a Face service client object and authenticate using your key.
+8. Create a view variables to hold the path and name of the image files we will be downloading.
+
+```python
+stamp = round(time.time())
+single_image_name = str(stamp)
+file_path = f'{os.getcwd()}/test-images/{single_image_name}'
+```
+
+9.  Create a Face service client object and authenticate using your key.
 
 ```python
 face_client = FaceClient(face_api_url, CognitiveServicesCredentials(subscription_key))
@@ -128,15 +136,18 @@ face_client = FaceClient(face_api_url, CognitiveServicesCredentials(subscription
 9. Now, let's perform a simple test using a random face from [fakeface.rest](https://hankhank10.github.io/fakeface/). Add the following, just after the `face_client` initialization line:
 
 ```python
-stamp = round((time.time()))
 # Detect a face in a random image that contains a single face
 single_face_image_url = 'https://fakeface.rest/face/view'
-single_image_name = str(stamp)
 
-# We use detection model 3 to get better performance.
-detected_faces = face_client.face.detect_with_url(url=single_face_image_url, detection_model='detection_03')
+response = requests.get(single_face_image_url)
+
+detected_faces = face_client.face.detect_with_stream(BytesIO(response.content),
+                                                     detection_model='detection_03')
 if not detected_faces:
     raise Exception('No face detected from image {}'.format(single_image_name))
+
+img = Image.open(BytesIO(response.content))
+img.save(f'{file_path}.png', 'PNG')
 
 # Display the detected face ID in the first single-face image.
 # Face IDs are used for comparison to faces (their IDs) detected in other images.
@@ -158,8 +169,7 @@ Not very interesting, so let's use the Face API to draw a bounding box around th
 
 ```python
 def drawFaceRectangles() :
-    response = requests.get(single_face_image_url)
-    img = Image.open(BytesIO(response.content))
+    img = Image.open(f'{file_path}.png')
 
     # For each face returned use the face rectangle and draw a red box.
     print('Drawing rectangle around face... see popup for results.')
@@ -168,7 +178,7 @@ def drawFaceRectangles() :
         draw.rectangle(getRectangle(face), outline='red')
 
     img.show()
-    img.save(os.getcwd() + "/test-images/" + single_image_name + "_modified.png", "PNG")
+    img.save(f'{file_path}_modified.png', 'PNG')
 ```
 
 12. This function uses another function called `getRectangle` that we also need to add.
@@ -204,12 +214,12 @@ Finally, let's add emotion detection to our script and write that on the image, 
 attrs = ["age", "gender", "headPose", "smile", "facialHair", "glasses", "emotion", "hair", "makeup", "occlusion", "accessories", "blur", "exposure", "noise"]
 ```
 
-2. Then, modify `detect_with_url` to pass in the attributes string as a parameter and change the `detection_model`:
+2. Then, modify `detect_with_stream` to pass in the attributes string as a parameter and change the `detection_model`:
 
 ```python
-detected_faces = face_client.face.detect_with_url(url=single_face_image_url,
-                                                  detection_model='detection_01',
-                                                  return_face_attributes=attrs)
+detected_faces = face_client.face.detect_with_stream(BytesIO(response.content),
+                                                     detection_model='detection_01',
+                                                     return_face_attributes=attrs)
 ```
 
 If you want to see the results of this change on an image before proceeding, you can add a `print(face.face_attributes)` to the `for-in` loop and you'll see something like this:
@@ -277,6 +287,6 @@ draw.text(getCoordsForText(face), str(getMainEmotion(face)), fill=(255, 255, 255
 
 If you want to keep playing with this example, why not try:
 
-- Using `detect_with_stream` instead of `detect_with_url` to load a file with multiple faces (like [this one](assets/Dagestani_man_and_woman.jpg)) and create multiple bounding boxes.
+- Use `detect_with_stream` to load a file with multiple faces (like [this one](assets/Dagestani_man_and_woman.jpg)) and create multiple bounding boxes.
 - Capture an image from your phone or webcam and run it though the service.
 - Try other example from the [Service Quickstart](https://docs.microsoft.com/en-us/azure/cognitive-services/Face/Quickstarts/client-libraries?pivots=programming-language-python&tabs=visual-studio)

@@ -6,6 +6,7 @@ import sys
 import time
 import json
 import uuid
+from charset_normalizer import detect
 import requests
 from urllib.parse import urlparse
 from io import BytesIO
@@ -23,7 +24,8 @@ face_api_url = config.ENDPOINT
 assert face_api_url
 
 stamp = round(time.time())
-
+single_image_name = str(stamp)
+file_path = f'{os.getcwd()}/test-images/{single_image_name}'
 
 def getCoordsForText(faceDictionary):
     rect = faceDictionary.face_rectangle
@@ -41,8 +43,7 @@ def getRectangle(faceDictionary):
     return ((left, top), (right, bottom))
 
 def drawFaceRectangles() :
-    response = requests.get(single_face_image_url)
-    img = Image.open(BytesIO(response.content))
+    img = Image.open(f'{file_path}.png')
 
     fnt = ImageFont.truetype('../assets/Roboto-Regular.ttf', 50)
 
@@ -55,7 +56,7 @@ def drawFaceRectangles() :
         draw.text(getCoordsForText(face), str(getMainEmotion(face)), fill=(255, 255, 255, 255), font=fnt)
 
     img.show()
-    img.save(os.getcwd() + "/test-images/" + single_image_name + "_modified.png", "PNG")
+    img.save(f'{file_path}_modified.png', 'PNG')
 
 def getMainEmotion(faceDictionary):
     # Get the emotion collection and sort in ascending order to get the top result
@@ -82,15 +83,19 @@ face_client = FaceClient(face_api_url, CognitiveServicesCredentials(subscription
 
 # Detect a face in a random image that contains a single face
 single_face_image_url = 'https://fakeface.rest/face/view'
-single_image_name = str(stamp)
+
+response = requests.get(single_face_image_url)
 
 attrs = ["age", "gender", "headPose", "smile", "facialHair", "glasses", "emotion", "hair", "makeup", "occlusion", "accessories", "blur", "exposure", "noise"]
 
-detected_faces = face_client.face.detect_with_url(url=single_face_image_url,
-                                                  detection_model='detection_01',
-                                                  return_face_attributes=attrs)
+detected_faces = face_client.face.detect_with_stream(BytesIO(response.content),
+                                                     detection_model='detection_01',
+                                                     return_face_attributes=attrs)
 if not detected_faces:
     raise Exception('No face detected from image {}'.format(single_image_name))
+
+img = Image.open(BytesIO(response.content))
+img.save(f'{file_path}.png', 'PNG')
 
 # Display the detected face ID in the first single-face image.
 # Face IDs are used for comparison to faces (their IDs) detected in other images.
