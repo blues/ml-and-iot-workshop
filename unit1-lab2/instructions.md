@@ -51,12 +51,22 @@ In order to use Azure cognitive services, you'll need to agree to Microsoft's re
 Now let's create a Python module to use the Face service to detect faces in a picture.
 
 1. Open a terminal on your computer and navigate to the `start` folder in this directory.
-2. Create a Python Virtual environment using the following commands. This step is not required, but useful as it will ensure that all of the tools you need for this lab are installed cleanly and in a local directory.
+2. Create a Python [Virtual environment](https://pypi.org/project/virtualenv/) using the following commands. This step is not required, but useful as it will ensure that all of the tools you need for this lab are installed cleanly and in a local directory.
+
+On Linux, macOS, or WSL on Windows, run:
 
 ```bash
 python3 -m venv env
 source env/bin/activate
 ```
+
+For Windows Powershell, run the following as an admin:
+
+```ps1
+python -m venv env
+.\env\Scripts\Activate.ps1
+```
+
 
 3. Install the Azure Cognitive Services Vision SDK and the Python image library Pillow
 

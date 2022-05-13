@@ -65,7 +65,7 @@ Once you've created a TFLite model, you're ready to move to your Blues device!
 
 Many MCU's (including the Blues Swan) do not have native filesystem support, which means you'll need to load your TFLite model into memory in order to use it. The recommended way to do this is to convert your model into a C array and compile it into your project.
 
-On Linux or macOS, you can do this with the `xxd` command.
+On Linux or macOS, you can do this with the `xxd` command. On Windows, this command is supported in bash for WSL.
 
 ```bash
 xxd -i model.tflite > model.h
