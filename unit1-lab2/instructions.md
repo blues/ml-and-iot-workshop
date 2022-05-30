@@ -208,7 +208,7 @@ This function takes the raw Face object from Azure and extracts the rectangle co
 
 Finally, let's add emotion detection to our script and write that on the image, as well.
 
-1. Start by adding an `attrs` variable to your script, just before then call to `detect_with_url`
+1. Start by adding an `attrs` variable to your script, just before then call to `detect_with_stream`
 
 ```python
 attrs = ["age", "gender", "headPose", "smile", "facialHair", "glasses", "emotion", "hair", "makeup", "occlusion", "accessories", "blur", "exposure", "noise"]
